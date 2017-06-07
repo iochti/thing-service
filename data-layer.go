@@ -3,7 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	pb "github.com/iochti/thing-service/proto"
 	_ "github.com/lib/pq"
 	"github.com/namsral/flag"
@@ -44,11 +46,39 @@ func (p *PostgresDL) Init() error {
 
 // GetThingByID gets a thing by its ID and modify the thing passed as parameter
 func (p *PostgresDL) GetThingByID(id int32, thing *pb.Thing) error {
+	if id <= 0 {
+		return fmt.Errorf("Error: invalid id")
+	}
+
+	if thing == nil {
+		return fmt.Errorf("Error: nil thing parameter")
+	}
+
+	if err := p.Db.QueryRow("SELECT id, name, description, created_at, updated_at FROM things WHERE id = $1", id).Scan(
+		&thing.ID,
+		&thing.Name,
+		&thing.Description,
+		&thing.CreatedAt.Seconds,
+		&thing.UpdatedAt.Seconds,
+	); err != nil {
+		return err
+	}
 	return nil
 }
 
 // CreateThing creates a thing and modify the thing's ID passed as parameter
 func (p *PostgresDL) CreateThing(thing *pb.Thing) error {
+	var userID int
+	timeNow := time.Now()
+	err := p.Db.QueryRow(`INSERT INTO things(name, description, created_at, updated_at)
+	VALUES($1, $2, $3, $3) RETURNING id`, thing.GetName(), thing.GetDescription(), timeNow).Scan(&userID)
+	if err != nil {
+		return err
+	}
+	thing.ID = int32(userID)
+	thing.CreatedAt = &timestamp.Timestamp{Seconds: int64(timeNow.Unix())}
+	thing.UpdatedAt = &timestamp.Timestamp{Seconds: int64(timeNow.Unix())}
+
 	return nil
 }
 

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package proto;
 
+import "google/protobuf/timestamp.proto";
+
 service ThingSvc {
   rpc GetThing(ThingIDRequest) returns (Thing) {}
   rpc CreateThing(Thing) returns (Thing) {}
@@ -18,6 +20,8 @@ message Thing {
   int32 ID = 1;
   string name = 2;
   string description = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
 }
 
 message ThingIDRequest {
