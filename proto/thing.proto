@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package proto;
+
+service ThingSvc {
+  rpc GetThing(ThingIDRequest) returns (Thing) {}
+  rpc CreateThing(Thing) returns (Thing) {}
+  rpc UpdateThing(Thing) returns (Thing) {}
+  rpc DeleteThing(ThingIDRequest) returns (ThingDeletion) {}
+  rpc BulkDeleteThing(ThingIDArray) returns (ThingDeletion) {}
+}
+
+message ThingIDArray {
+  repeated int32 things = 1;
+}
+
+message Thing {
+  int32 ID = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message ThingIDRequest {
+  int32 ID = 1;
+}
+
+message ThingDeletion {
+  int32 ID = 1;
+}
