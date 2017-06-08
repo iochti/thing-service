@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
@@ -53,29 +55,33 @@ func (p *PostgresDL) GetThingByID(id int32, thing *pb.Thing) error {
 	if thing == nil {
 		return fmt.Errorf("Error: nil thing parameter")
 	}
+	var createdAt time.Time
+	var updatedAt time.Time
 
-	if err := p.Db.QueryRow("SELECT id, name, description, created_at, updated_at FROM things WHERE id = $1", id).Scan(
+	if err := p.Db.QueryRow("SELECT id, name, description, created_at, updated_at FROM things WHERE id = $1;", id).Scan(
 		&thing.ID,
 		&thing.Name,
 		&thing.Description,
-		&thing.CreatedAt.Seconds,
-		&thing.UpdatedAt.Seconds,
+		&createdAt,
+		&updatedAt,
 	); err != nil {
 		return err
 	}
+	thing.CreatedAt = &timestamp.Timestamp{Seconds: createdAt.Unix()}
+	thing.UpdatedAt = &timestamp.Timestamp{Seconds: updatedAt.Unix()}
 	return nil
 }
 
 // CreateThing creates a thing and modify the thing's ID passed as parameter
 func (p *PostgresDL) CreateThing(thing *pb.Thing) error {
-	var userID int
+	var thingID int
 	timeNow := time.Now()
 	err := p.Db.QueryRow(`INSERT INTO things(name, description, created_at, updated_at)
-	VALUES($1, $2, $3, $3) RETURNING id`, thing.GetName(), thing.GetDescription(), timeNow).Scan(&userID)
+	VALUES($1, $2, $3, $3) RETURNING id;`, thing.GetName(), thing.GetDescription(), timeNow).Scan(&thingID)
 	if err != nil {
 		return err
 	}
-	thing.ID = int32(userID)
+	thing.ID = int32(thingID)
 	thing.CreatedAt = &timestamp.Timestamp{Seconds: int64(timeNow.Unix())}
 	thing.UpdatedAt = &timestamp.Timestamp{Seconds: int64(timeNow.Unix())}
 
@@ -84,15 +90,43 @@ func (p *PostgresDL) CreateThing(thing *pb.Thing) error {
 
 // UpdateThing updates a thing and updates the thing passed as parameter
 func (p *PostgresDL) UpdateThing(thing *pb.Thing) error {
+	updateTime := time.Now()
+	_, err := p.Db.Exec(`UPDATE things SET
+		name=$1,
+		description=$2,
+		updated_at=$3
+		WHERE id=$4;`, thing.GetName(), thing.GetDescription(), updateTime, thing.GetID())
+	if err != nil {
+		return err
+	}
+	thing.UpdatedAt.Seconds = updateTime.Unix()
 	return nil
 }
 
 // DeleteThing deletes a thing identified by its ID
 func (p *PostgresDL) DeleteThing(id int32) error {
+	if id <= 0 {
+		return fmt.Errorf("Error: invalid ID")
+	}
+	_, err := p.Db.Exec("DELETE FROM things WHERE id=$1;", id)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // DeleteThingArray deletes a list of things identifed by their ID
 func (p *PostgresDL) DeleteThingArray(ids []int32) error {
+	if len(ids) == 0 {
+		return fmt.Errorf("Error: empty IDs array")
+	}
+	query := make([]string, len(ids))
+	for i, id := range ids {
+		query[i] = strconv.Itoa(int(id))
+	}
+	_, err := p.Db.Exec(fmt.Sprintf("DELETE FROM things WHERE id IN (%s)", strings.Join(query, ", ")))
+	if err != nil {
+		return err
+	}
 	return nil
 }
