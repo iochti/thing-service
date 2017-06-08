@@ -91,15 +91,17 @@ func (p *PostgresDL) CreateThing(thing *pb.Thing) error {
 // UpdateThing updates a thing and updates the thing passed as parameter
 func (p *PostgresDL) UpdateThing(thing *pb.Thing) error {
 	updateTime := time.Now()
-	_, err := p.Db.Exec(`UPDATE things SET
+	var createdAt time.Time
+	err := p.Db.QueryRow(`UPDATE things SET
 		name=$1,
 		description=$2,
 		updated_at=$3
-		WHERE id=$4;`, thing.GetName(), thing.GetDescription(), updateTime, thing.GetID())
+		WHERE id=$4 RETURNING created_at;`, thing.GetName(), thing.GetDescription(), updateTime, thing.GetID()).Scan(&createdAt)
 	if err != nil {
 		return err
 	}
-	thing.UpdatedAt.Seconds = updateTime.Unix()
+	thing.UpdatedAt = &timestamp.Timestamp{Seconds: updateTime.Unix()}
+	thing.CreatedAt = &timestamp.Timestamp{Seconds: createdAt.Unix()}
 	return nil
 }
 
