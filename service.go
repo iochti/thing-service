@@ -72,3 +72,8 @@ func (t *ThingSvc) BulkDeleteThing(ctx context.Context, in *pb.ThingIDArray) (*e
 	}
 	return new(empty.Empty), nil
 }
+
+// ListGroupThings sets a stream that sends a list of things fetched by their group ID
+func (t *ThingSvc) ListGroupThings(in *pb.GroupRequest, stream pb.ThingSvc_ListGroupThingsServer) error {
+	return nil
+}

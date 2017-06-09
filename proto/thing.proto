@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-package iochti.thing;
+package proto;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 
 service ThingSvc {
   rpc GetThing(ThingIDRequest) returns (Thing) {}
-  rpc ListGroupThings(GroupIDRequest) returns (stream Thing) {}
+  rpc ListGroupThings(GroupRequest) returns (stream Thing) {}
   rpc CreateThing(Thing) returns (Thing) {}
   rpc UpdateThing(Thing) returns (Thing) {}
   rpc DeleteThing(ThingIDRequest) returns (google.protobuf.Empty) {}
@@ -27,10 +27,10 @@ message Thing {
   google.protobuf.Timestamp updated_at = 6;
 }
 
-message GroupIDRequest {
+message ThingIDRequest {
   int32 ID = 1;
 }
 
-message ThingIDRequest {
+message GroupRequest {
   int32 ID = 1;
 }

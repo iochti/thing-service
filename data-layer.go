@@ -13,6 +13,8 @@ import (
 	"github.com/namsral/flag"
 )
 
+const THING_TABLE_NAME = "thing"
+
 // DataLayerInterface is an interface to abstract DB queries
 type DataLayerInterface interface {
 	GetThingByID(id int32, thing *pb.Thing) error
@@ -58,10 +60,11 @@ func (p *PostgresDL) GetThingByID(id int32, thing *pb.Thing) error {
 	var createdAt time.Time
 	var updatedAt time.Time
 
-	if err := p.Db.QueryRow("SELECT id, name, description, created_at, updated_at FROM things WHERE id = $1;", id).Scan(
+	if err := p.Db.QueryRow("SELECT id, group_id, name, MAC, created_at, updated_at FROM "+THING_TABLE_NAME+" WHERE id = $1;", id).Scan(
 		&thing.ID,
+		&thing.GroupID,
 		&thing.Name,
-		&thing.Description,
+		&thing.MAC,
 		&createdAt,
 		&updatedAt,
 	); err != nil {
@@ -76,8 +79,8 @@ func (p *PostgresDL) GetThingByID(id int32, thing *pb.Thing) error {
 func (p *PostgresDL) CreateThing(thing *pb.Thing) error {
 	var thingID int
 	timeNow := time.Now()
-	err := p.Db.QueryRow(`INSERT INTO things(name, description, created_at, updated_at)
-	VALUES($1, $2, $3, $3) RETURNING id;`, thing.GetName(), thing.GetDescription(), timeNow).Scan(&thingID)
+	err := p.Db.QueryRow("INSERT INTO "+THING_TABLE_NAME+`(group_id, name, MAC, created_at, updated_at)
+	VALUES($1, $2, $3, $4) RETURNING id;`, thing.GetGroupID(), thing.GetName(), thing.GetMAC(), timeNow).Scan(&thingID)
 	if err != nil {
 		return err
 	}
@@ -92,11 +95,12 @@ func (p *PostgresDL) CreateThing(thing *pb.Thing) error {
 func (p *PostgresDL) UpdateThing(thing *pb.Thing) error {
 	updateTime := time.Now()
 	var createdAt time.Time
-	err := p.Db.QueryRow(`UPDATE things SET
+	err := p.Db.QueryRow("UPDATE "+THING_TABLE_NAME+`SET
 		name=$1,
-		description=$2,
-		updated_at=$3
-		WHERE id=$4 RETURNING created_at;`, thing.GetName(), thing.GetDescription(), updateTime, thing.GetID()).Scan(&createdAt)
+		MAC=$2,
+		group_id=$3,
+		updated_at=$4,
+		WHERE id=$5 RETURNING created_at;`, thing.GetName(), thing.GetMAC(), thing.GetGroupID(), updateTime, thing.GetID()).Scan(&createdAt)
 	if err != nil {
 		return err
 	}
@@ -110,7 +114,7 @@ func (p *PostgresDL) DeleteThing(id int32) error {
 	if id <= 0 {
 		return fmt.Errorf("Error: invalid ID")
 	}
-	_, err := p.Db.Exec("DELETE FROM things WHERE id=$1;", id)
+	_, err := p.Db.Exec("DELETE FROM "+THING_TABLE_NAME+" WHERE id=$1;", id)
 	if err != nil {
 		return err
 	}
@@ -126,7 +130,7 @@ func (p *PostgresDL) DeleteThingArray(ids []int32) error {
 	for i, id := range ids {
 		query[i] = strconv.Itoa(int(id))
 	}
-	_, err := p.Db.Exec(fmt.Sprintf("DELETE FROM things WHERE id IN (%s)", strings.Join(query, ", ")))
+	_, err := p.Db.Exec(fmt.Sprintf("DELETE FROM %s WHERE id IN (%s)", THING_TABLE_NAME, strings.Join(query, ", ")))
 	if err != nil {
 		return err
 	}
