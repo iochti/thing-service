@@ -80,7 +80,7 @@ func (p *PostgresDL) CreateThing(thing *pb.Thing) error {
 	var thingID int
 	timeNow := time.Now()
 	err := p.Db.QueryRow("INSERT INTO "+THING_TABLE_NAME+`(group_id, name, MAC, created_at, updated_at)
-	VALUES($1, $2, $3, $4) RETURNING id;`, thing.GetGroupID(), thing.GetName(), thing.GetMAC(), timeNow).Scan(&thingID)
+	VALUES($1, $2, $3, $4, $4) RETURNING id;`, thing.GetGroupID(), thing.GetName(), thing.GetMAC(), timeNow).Scan(&thingID)
 	if err != nil {
 		return err
 	}
