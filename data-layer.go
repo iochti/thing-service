@@ -62,7 +62,7 @@ func (p *PostgresDL) GetThingByID(id int32, thing *pb.Thing) error {
 
 	if err := p.Db.QueryRow("SELECT id, group_id, name, MAC, created_at, updated_at FROM "+THING_TABLE_NAME+" WHERE id = $1;", id).Scan(
 		&thing.ID,
-		&thing.GroupID,
+		&thing.GroupId,
 		&thing.Name,
 		&thing.MAC,
 		&createdAt,
@@ -80,7 +80,7 @@ func (p *PostgresDL) CreateThing(thing *pb.Thing) error {
 	var thingID int
 	timeNow := time.Now()
 	err := p.Db.QueryRow("INSERT INTO "+THING_TABLE_NAME+`(group_id, name, MAC, created_at, updated_at)
-	VALUES($1, $2, $3, $4, $4) RETURNING id;`, thing.GetGroupID(), thing.GetName(), thing.GetMAC(), timeNow).Scan(&thingID)
+	VALUES($1, $2, $3, $4, $4) RETURNING id;`, thing.GetGroupId(), thing.GetName(), thing.GetMAC(), timeNow).Scan(&thingID)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (p *PostgresDL) UpdateThing(thing *pb.Thing) error {
 		MAC=$2,
 		group_id=$3,
 		updated_at=$4,
-		WHERE id=$5 RETURNING created_at;`, thing.GetName(), thing.GetMAC(), thing.GetGroupID(), updateTime, thing.GetID()).Scan(&createdAt)
+		WHERE id=$5 RETURNING created_at;`, thing.GetName(), thing.GetMAC(), thing.GetGroupId(), updateTime, thing.GetID()).Scan(&createdAt)
 	if err != nil {
 		return err
 	}
