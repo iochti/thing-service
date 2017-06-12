@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+
 	empty "github.com/golang/protobuf/ptypes/empty"
+	"github.com/iochti/thing-service/models"
 	pb "github.com/iochti/thing-service/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -15,44 +18,62 @@ type ThingSvc struct {
 
 // GetThing gets a thing by its ID and returns it
 func (t *ThingSvc) GetThing(ctx context.Context, in *pb.ThingIDRequest) (*pb.Thing, error) {
-	if in.GetID() == 0 {
+	if in.GetID() == "" {
 		return nil, grpc.Errorf(codes.Internal, "Error: missing ID in request")
 	}
-	thingID := in.GetID()
-	tng := new(pb.Thing)
-	if err := t.Db.GetThingByID(thingID, tng); err != nil {
+	tng := new(models.Thing)
+	if err := t.Db.GetThingByID(in.GetID(), tng); err != nil {
 		return nil, grpc.Errorf(codes.NotFound, err.Error())
 	}
-	return tng, nil
+	resp, err := json.Marshal(tng)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Thing{Item: resp}, nil
 }
 
 // CreateThing takes a thing as parameter, creates it and returns it with its ID
 func (t *ThingSvc) CreateThing(ctx context.Context, in *pb.Thing) (*pb.Thing, error) {
-	if err := t.Db.CreateThing(in); err != nil {
+	thing := models.Thing{}
+	if err := json.Unmarshal(in.GetItem(), &thing); err != nil {
+		return nil, err
+	}
+
+	if err := t.Db.CreateThing(&thing); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
 
-	if in.GetID() == 0 {
+	if thing.ID == "" {
 		return nil, grpc.Errorf(codes.Internal, "Error: no userid after insertion")
 	}
-	return in, nil
+	bytesResp, err := json.Marshal(thing)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Thing{Item: bytesResp}, nil
 }
 
 // UpdateThing takes a thing as parameter, updates the corresponding data
 // and returns the updated element
 func (t *ThingSvc) UpdateThing(ctx context.Context, in *pb.Thing) (*pb.Thing, error) {
-	if in.GetID() == 0 {
-		return nil, grpc.Errorf(codes.InvalidArgument, "Error: can't update user with no ID")
+	tng := models.Thing{}
+	if err := json.Unmarshal(in.GetItem(), &tng); err != nil {
+		return nil, err
 	}
-	if err := t.Db.UpdateThing(in); err != nil {
+
+	if err := t.Db.UpdateThing(&tng); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
-	return in, nil
+	byteResp, err := json.Marshal(tng)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Thing{Item: byteResp}, nil
 }
 
 // DeleteThing takes a Thing ID as parameter, deletes it and returns the id of the deleted value
 func (t *ThingSvc) DeleteThing(ctx context.Context, in *pb.ThingIDRequest) (*empty.Empty, error) {
-	if in.GetID() == 0 {
+	if in.GetID() == "" {
 		return nil, grpc.Errorf(codes.InvalidArgument, "Error: invalid id as parameter")
 	}
 	if err := t.Db.DeleteThing(in.GetID()); err != nil {
