@@ -63,9 +63,10 @@ func (m *MgoDL) GetThingByID(id string, thing *models.Thing) error {
 	if thing == nil {
 		return fmt.Errorf("Error: nil thing parameter")
 	}
+	fmt.Println(id)
 	sess := m.Session.Copy()
 	defer sess.Close()
-	if err := sess.DB(DBName).C(THING_COLLECTION).FindId(id).One(thing); err != nil {
+	if err := sess.DB(DBName).C(THING_COLLECTION).FindId(bson.ObjectIdHex(id)).One(thing); err != nil {
 		return err
 	}
 	return nil
@@ -76,7 +77,7 @@ func (m *MgoDL) CreateThing(thing *models.Thing) error {
 	timeNow := time.Now()
 	thing.CreatedAt = timeNow
 	thing.UpdatedAt = timeNow
-	thing.ID = bson.NewObjectId().String()
+	thing.ID = bson.NewObjectId()
 	sess := m.Session.Copy()
 	defer sess.Close()
 	if err := sess.DB(DBName).C(THING_COLLECTION).Insert(&thing); err != nil {
@@ -105,7 +106,7 @@ func (m *MgoDL) DeleteThing(id string) error {
 	}
 	sess := m.Session.Copy()
 	defer sess.Close()
-	if err := sess.DB(DBName).C(THING_COLLECTION).RemoveId(id); err != nil {
+	if err := sess.DB(DBName).C(THING_COLLECTION).RemoveId(bson.ObjectIdHex(id)); err != nil {
 		return err
 	}
 	return nil
@@ -118,8 +119,10 @@ func (m *MgoDL) DeleteThingArray(ids []string) error {
 	}
 	sess := m.Session.Copy()
 	defer sess.Close()
-	if _, err := sess.DB(DBName).C(THING_COLLECTION).RemoveAll(bson.M{"_id": bson.M{"$in": ids}}); err != nil {
-		return err
+	for _, o := range ids {
+		if err := sess.DB(DBName).C(THING_COLLECTION).Remove(bson.M{"_id": bson.M{"$eq": bson.ObjectIdHex(o)}}); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"github.com/iochti/thing-service/models"
@@ -87,7 +88,7 @@ func (t *ThingSvc) BulkDeleteThing(ctx context.Context, in *pb.ThingIDArray) (*e
 	if len(in.GetThings()) == 0 {
 		return nil, grpc.Errorf(codes.Internal, "Error: empty ids array")
 	}
-
+	fmt.Println(in.GetThings())
 	if err := t.Db.DeleteThingArray(in.GetThings()); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
