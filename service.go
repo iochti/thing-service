@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"github.com/iochti/thing-service/models"
@@ -88,7 +87,6 @@ func (t *ThingSvc) BulkDeleteThing(ctx context.Context, in *pb.ThingIDArray) (*e
 	if len(in.GetThings()) == 0 {
 		return nil, grpc.Errorf(codes.Internal, "Error: empty ids array")
 	}
-	fmt.Println(in.GetThings())
 	if err := t.Db.DeleteThingArray(in.GetThings()); err != nil {
 		return nil, grpc.Errorf(codes.Internal, err.Error())
 	}
@@ -97,5 +95,18 @@ func (t *ThingSvc) BulkDeleteThing(ctx context.Context, in *pb.ThingIDArray) (*e
 
 // ListGroupThings sets a stream that sends a list of things fetched by their group ID
 func (t *ThingSvc) ListGroupThings(in *pb.GroupRequest, stream pb.ThingSvc_ListGroupThingsServer) error {
+	things := []models.Thing{}
+	if err := t.Db.GetThingsByGroup(in.GetID(), things); err != nil {
+		return err
+	}
+	for _, v := range things {
+		bytes, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		if err = stream.Send(&pb.Thing{Item: bytes}); err != nil {
+			return err
+		}
+	}
 	return nil
 }
