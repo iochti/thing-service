@@ -2,9 +2,6 @@
 	"ImportPath": "github.com/iochti/thing-service",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
@@ -16,10 +13,6 @@
 		},
 		{
 			"ImportPath": "github.com/golang/protobuf/ptypes/empty",
-			"Rev": "5a0f697c9ed9d68fef0116532c6e05cfeae00e55"
-		},
-		{
-			"ImportPath": "github.com/golang/protobuf/ptypes/timestamp",
 			"Rev": "5a0f697c9ed9d68fef0116532c6e05cfeae00e55"
 		},
 		{
@@ -154,6 +147,31 @@
 			"ImportPath": "google.golang.org/grpc/transport",
 			"Comment": "v1.2.0-129-g6fecf28",
 			"Rev": "6fecf2831adf75ce3b8b756d2d174db8a2044dbb"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2",
+			"Comment": "r2016.08.01-5-g3f83fa5",
+			"Rev": "3f83fa5005286a7fe593b055f0d7771a7dce4655"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/bson",
+			"Comment": "r2016.08.01-5-g3f83fa5",
+			"Rev": "3f83fa5005286a7fe593b055f0d7771a7dce4655"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/internal/json",
+			"Comment": "r2016.08.01-5-g3f83fa5",
+			"Rev": "3f83fa5005286a7fe593b055f0d7771a7dce4655"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/internal/sasl",
+			"Comment": "r2016.08.01-5-g3f83fa5",
+			"Rev": "3f83fa5005286a7fe593b055f0d7771a7dce4655"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/internal/scram",
+			"Comment": "r2016.08.01-5-g3f83fa5",
+			"Rev": "3f83fa5005286a7fe593b055f0d7771a7dce4655"
 		}
 	]
 }
