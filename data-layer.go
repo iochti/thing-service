@@ -17,7 +17,7 @@ const THING_COLLECTION = "thing"
 // DataLayerInterface is an interface to abstract DB queries
 type DataLayerInterface interface {
 	GetThingByID(id string, thing *models.Thing) error
-	GetThingsByGroup(id string, things []models.Thing) error
+	GetThingsByGroup(id string) ([]models.Thing, error)
 	CreateThing(thing *models.Thing) error
 	UpdateThing(thing *models.Thing) error
 	DeleteThing(id string) error
@@ -73,13 +73,14 @@ func (m *MgoDL) GetThingByID(id string, thing *models.Thing) error {
 }
 
 // GetThingsByGroup gets all things by their group
-func (m *MgoDL) GetThingsByGroup(groupID string, things []models.Thing) error {
+func (m *MgoDL) GetThingsByGroup(groupID string) ([]models.Thing, error) {
 	sess := m.Session.Copy()
 	defer sess.Close()
+	things := make([]models.Thing, 0)
 	if err := sess.DB(DBName).C(THING_COLLECTION).Find(bson.M{"groupId": bson.M{"$eq": bson.ObjectIdHex(groupID)}}).All(&things); err != nil {
-		return err
+		return things, err
 	}
-	return nil
+	return things, nil
 }
 
 // CreateThing creates a thing and modify the thing's ID passed as parameter

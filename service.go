@@ -95,8 +95,8 @@ func (t *ThingSvc) BulkDeleteThing(ctx context.Context, in *pb.ThingIDArray) (*e
 
 // ListGroupThings sets a stream that sends a list of things fetched by their group ID
 func (t *ThingSvc) ListGroupThings(in *pb.GroupRequest, stream pb.ThingSvc_ListGroupThingsServer) error {
-	things := []models.Thing{}
-	if err := t.Db.GetThingsByGroup(in.GetID(), things); err != nil {
+	things, err := t.Db.GetThingsByGroup(in.GetID())
+	if err != nil {
 		return err
 	}
 	for _, v := range things {
